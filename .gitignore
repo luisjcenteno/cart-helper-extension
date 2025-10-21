@@ -28,6 +28,14 @@ out/
 .parcel-cache/
 .cache-loader/
 
+# Chrome extension packaged archives
+*.zip
+!docs/*.zip
+
+# Temporary staging directories
+tmp/
+temp/
+
 # Coverage
 coverage/
 nyc_output/

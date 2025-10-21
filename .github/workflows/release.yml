@@ -1,0 +1,78 @@
+name: Build & Release Extension
+
+on:
+  push:
+    tags:
+      - 'v*'
+  workflow_dispatch: {}
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Validate Build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Verify manifest version matches tag (if tag)
+        if: startsWith(github.ref, 'refs/tags/')
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          MANIFEST_VERSION=$(jq -r '.version' manifest.json)
+          echo "Tag version: $TAG_VERSION"
+          echo "Manifest version: $MANIFEST_VERSION"
+          if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
+            echo "Manifest version does not match tag version" >&2
+            exit 1
+          fi
+
+      - name: Create dist zip
+        run: |
+          chmod +x scripts/package.sh
+          ./scripts/package.sh
+          ls -al dist
+
+      - name: Upload artifact
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: extension-zip
+          path: dist/*.zip
+
+  release:
+    name: Publish Release
+    needs: validate
+    if: startsWith(github.ref, 'refs/tags/')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Install jq
+        run: sudo apt-get update && sudo apt-get install -y jq
+
+      - name: Build zip
+        run: |
+          chmod +x scripts/package.sh
+          ./scripts/package.sh
+
+      - name: Determine archive name
+        id: name
+        run: |
+          MANIFEST_VERSION=$(jq -r '.version' manifest.json)
+          NAME=$(jq -r '.name' manifest.json | tr ' ' '-' | tr '[:upper:]' '[:lower:]')
+          echo "archive=${NAME}-v${MANIFEST_VERSION}.zip" >> $GITHUB_OUTPUT
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: dist/${{ steps.name.outputs.archive }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

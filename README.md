@@ -67,3 +67,97 @@ Add icon files to the `icons/` directory:
 ## License
 
 MIT License
+
+## Production Distribution
+
+You can distribute this extension in two common ways:
+
+### 1. GitHub Release (Direct Download)
+
+Users can download a ZIP archive and load it unpacked.
+
+Steps:
+1. Run the packaging script:
+	```bash
+	./scripts/package.sh
+	```
+2. The ZIP is created under `dist/` (e.g. `saatva-helper-extension-v1.0.0.zip`).
+3. Create a new GitHub Release and attach the ZIP file.
+4. Users download the ZIP, extract it, then follow the Installation steps (Load unpacked).
+
+### 2. Chrome Web Store
+
+To publish to the Chrome Web Store:
+1. Sign in to the Chrome Web Store Developer Dashboard.
+2. Click "Add New Item" and upload the generated ZIP from `dist/`.
+3. Provide screenshots, a detailed description, and categorized metadata.
+4. Submit for review. Future updates will require incrementing the `version` in `manifest.json`.
+
+### Versioning Workflow
+
+1. Update `manifest.json` version (e.g. `1.0.1`).
+2. Commit changes: `git commit -am "chore: bump version to 1.0.1"`.
+3. Tag the release: `git tag v1.0.1 && git push --tags`.
+4. Run `./scripts/package.sh --version 1.0.1` (optional override if not yet committed).
+5. Attach the ZIP to the GitHub Release or upload to the Chrome Web Store.
+
+### Packaging Script Details
+
+The script `scripts/package.sh`:
+- Reads `manifest.json` for name and version
+- Stages only necessary files (html, css, js, icons, assets, manifest)
+- Produces a deterministic ZIP archive in `dist/`
+
+If you add new required files (e.g. content scripts, background service workers), update the copy list in the script accordingly.
+
+### Security / Privacy Considerations
+
+- Limit permissions in `manifest.json` to only what you need.
+- Review any host permissions before publishing.
+- Consider adding a privacy policy link in the Web Store listing if you access cookies or user data.
+
+### Troubleshooting
+
+| Issue | Fix |
+|-------|-----|
+| ZIP rejected (missing manifest) | Ensure `manifest.json` is at root of archive |
+| Icons not displaying | Verify all icon sizes exist and paths match `manifest.json` |
+| Version conflict | Increment `version` field before uploading new build |
+| Permission warning | Remove unused permissions and host patterns |
+
+## CI / Automated Build & Release
+
+GitHub Actions workflow (`.github/workflows/release.yml`) automates packaging:
+
+### Triggers
+- `pull_request` to `main`: Runs validation (builds ZIP, ensures script works). No release created.
+- `push` tag matching `v*` (e.g. `v1.0.0`): Validates, builds, and publishes a GitHub Release with the ZIP attached.
+- Manual Run: Via "Run workflow" button (will build artifact if not a PR).
+
+### Tag & Version Sync
+Tag must be `v<version>` matching the `version` in `manifest.json`. Mismatch causes workflow failure.
+
+### Release Steps
+1. Bump version in `manifest.json`.
+2. Commit & tag:
+	```bash
+	git commit -am "chore: bump version to 1.1.0"
+	git tag v1.1.0
+	git push origin main --tags
+	```
+3. Workflow builds ZIP and attaches to Release automatically.
+
+### Manual Dispatch
+From Actions tab: select workflow, "Run workflow" → choose branch → Run. Produces artifact (`extension-zip`).
+
+### Adjusting Workflow
+Edit `.github/workflows/release.yml` to:
+- Change trigger branches
+- Add lint / tests before packaging
+- Upload to additional storage (e.g. S3) by adding a step.
+
+### Future Enhancement Ideas
+- Add checksum generation (SHA256) and publish alongside artifact.
+- Add a matrix for multiple browsers (Chrome/Firefox) if a WebExtension migration occurs.
+- Include automated screenshot capture using Puppeteer.
+
