@@ -1,115 +1,126 @@
-document.addEventListener('DOMContentLoaded', function () {
-    const actionButton = document.getElementById('actionButton')
-    const messageDiv = document.getElementById('message')
-    const cartInfoDiv = document.getElementById('cartInfo')
-    const cartIdValue = document.getElementById('cartIdValue')
+document.addEventListener('DOMContentLoaded', () => {
+    const refreshButton = document.getElementById('refreshCartButton')
+    const cartSection = document.getElementById('withCartId')
+    const cartIdPre = document.getElementById('cartId')
+    const unsupportedSection = document.getElementById('unsupportedDomain')
+    const copyCartIdButton = document.getElementById('copyCartId')
+    const copyIcon = document.getElementById('copyIcon')
+    // Actions
+    const openQAButton = document.getElementById('openQA')
+    const openStageButton = document.getElementById('openStage')
+    const openCartLocalButton = document.getElementById('openCartLocal')
+    const openCheckoutLocalButton = document.getElementById('openCheckoutLocal')
+    // dev branch
+    const devBranchPageSelect = document.getElementById('devBranchPage')
+    const devBranchInput = document.getElementById('devBranchInput')
+    const devBranchSubmit = document.getElementById('devBranchSubmit')
 
-    // Automatically check for cookie when popup opens
-    checkForCartId()
+    // Initial state
+    let cartIdCookie
+    hide(cartSection)
+    hide(unsupportedSection)
+    fetchCartId()
 
-    // Button click handler for manual refresh
-    actionButton.addEventListener('click', function () {
-        checkForCartId()
+    refreshButton.addEventListener('click', () => {
+        fetchCartId()
     })
 
-    function checkForCartId() {
-        // Show loading state
-        actionButton.textContent = 'Refreshing...'
-        actionButton.disabled = true
-        hideCartInfo()
-        hideMessage()
-
-
-        // Check current tab domain and get cookies
-        chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    function fetchCartId() {
+        setLoading(true)
+        // Get active tab and validate domain
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
             const currentTab = tabs[0]
+            if (!currentTab?.url) {
+                showUnsupported('No active tab URL available.')
+                return
+            }
             const url = new URL(currentTab.url)
             const hostname = url.hostname
-
-            // Check if current domain matches *.tsc-starts-coding.com pattern
-            if (!hostname.endsWith('tsc-starts-coding.com')) {
-                resetButton()
-                showMessage(
-                    `Error: Current domain "${hostname}" does not match *.tsc-starts-coding.com`,
-                    'error'
-                )
+            const supported = hostname.endsWith('tsc-starts-coding.com')
+            if (!supported) {
+                showUnsupported(`Unsupported: ${hostname}`)
                 return
             }
 
-            // Get cookies for the matching domain
-            chrome.cookies.getAll(
-                {
-                    domain: hostname
-                },
-                function (cookies) {
-                    resetButton()
-
-                    // Look for cartId cookie
-                    const cartIdCookie = cookies.find((cookie) => cookie.name === 'cartId')
-
-                    if (cartIdCookie) {
-                        // Display cart information
-                        cartIdValue.textContent = cartIdCookie.value
-                        showCartInfo()
-                        showMessage('Cart ID found successfully!', 'success')
-
-                        generateActionList()
-                    } else {
-                        showMessage('Cart ID cookie not found on this domain.', 'error')
-                    }
+            chrome.cookies.getAll({ domain: hostname }, (cookies) => {
+                cartIdCookie = cookies.find((c) => c.name === 'cartId')?.value
+                if (cartIdCookie) {
+                    cartIdPre.textContent = cartIdCookie
+                    cartIdPre.dataset.cartid = cartIdCookie
+                    showCart()
+                    setLinks()
+                } else {
+                    cartIdPre.textContent = '(no cart yet)'
+                    showCart() // still show section but with placeholder
                 }
-            )
+                setLoading(false)
+            })
         })
     }
 
-    function generateActionList() {
-        const cartActionList = document.getElementById('cart-action-list')
-        const checkoutActionList = document.getElementById('checkout-action-list')
-        cartActionList.innerHTML = '' // Clear existing items
-        checkoutActionList.innerHTML = '' // Clear existing items
+    function setLinks() {
+        openQAButton.href = `https://www.saatva-node-qa.tsc-starts-coding.com/cart/?cartId=${cartIdCookie}`
+        openStageButton.href = `https://www.saatva-node-stage.tsc-starts-coding.com/cart/?cartId=${cartIdCookie}`
+        openCartLocalButton.href = `https://cart.local/cart/?cartId=${cartIdCookie}`
+        openCheckoutLocalButton.href = `https://checkout.local/cart/?cartId=${cartIdCookie}`
+    }
 
-        // Add new action items
-        const cartId = cartIdValue.textContent
-        if (cartId) {
-            // Links for cart actions
-            const cartListItem = document.createElement('li')
-            cartListItem.innerHTML = `<a href="https://cart.local/cart?cartId=${cartId}" target="_blank">Open cart in Local</a>`
-            cartActionList.appendChild(cartListItem)
+    function showCart() {
+        hide(unsupportedSection)
+        show(cartSection)
+    }
 
-            // Links for checkout actions
-            const checkoutListItem = document.createElement('li')
-            checkoutListItem.innerHTML = `<a href="https://checkout.local/checkout?cartId=${cartId}" target="_blank">Open checkout in Local</a>`
-            checkoutActionList.appendChild(checkoutListItem)
+    function showUnsupported(msg) {
+        cartIdPre.textContent = ''
+        hide(cartSection)
+        show(unsupportedSection)
+        setLoading(false)
+    }
+
+    function setLoading(isLoading) {
+        if (isLoading) {
+            refreshButton.disabled = true
+            refreshButton.setAttribute('aria-busy', 'true')
+        } else {
+            refreshButton.disabled = false
+            refreshButton.removeAttribute('aria-busy')
         }
     }
 
-    function resetButton() {
-        actionButton.textContent = 'Refresh'
-        actionButton.disabled = false
-    }
-
-    function showMessage(text, type = 'success') {
-        messageDiv.textContent = text
-        messageDiv.className = `message ${type}`
-        messageDiv.classList.remove('hidden')
-
-        // Hide message after 5 seconds for success, keep error messages visible
-        if (type === 'success') {
-            setTimeout(() => {
-                messageDiv.classList.add('hidden')
-            }, 5000)
+    function copyCartIdToClipboard() {
+        const cartId = cartIdPre.dataset.cartid
+        if (cartId && cartId !== '(no cart yet)') {
+            navigator.clipboard.writeText(cartId).then(() => {
+                copyIcon.src = 'assets/copy-check.svg'
+                setTimeout(() => {
+                    copyIcon.src = 'assets/copy.svg'
+                }, 2000)
+            })
         }
     }
 
-    function hideMessage() {
-        messageDiv.classList.add('hidden')
+    // small helpers
+    function show(el) { el.classList.remove('container--hidden', 'hidden') }
+    function hide(el) { el.classList.add('container--hidden') }
+
+    function truncateText(text, maxLength) {
+        if (text.length <= maxLength) return text
+        return text.slice(0, maxLength - 3) + '...'
     }
 
-    function showCartInfo() {
-        cartInfoDiv.classList.remove('hidden')
-    }
+    // Bind copy button
+    copyCartIdButton.addEventListener('click', () => {
+        copyCartIdToClipboard()
+    })
 
-    function hideCartInfo() {
-        cartInfoDiv.classList.add('hidden')
-    }
+    // Bind dev branch submit
+    devBranchSubmit.addEventListener('click', () => {
+        const branch = devBranchInput.value
+        const selectedPage = devBranchPage.value
+        if (branch) {
+            // Open dev branch URL with cartId
+            const url = `https://${selectedPage}-${branch}.saatva.private/${selectedPage}/?cartId=${cartIdCookie}`
+            chrome.tabs.create({ url })
+        }
+    })
 })
