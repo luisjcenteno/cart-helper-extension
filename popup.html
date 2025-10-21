@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Saatva Helper</title>
+        <link rel="stylesheet" href="popup.css" />
+    </head>
+    <body>
+        <div class="container">
+            <h2>Saatva Helper</h2>
+            <button id="actionButton" class="primary-button">Refresh</button>
+            <div id="message" class="message hidden"></div>
+            <div id="cartInfo" class="cart-info hidden">
+                <h3>Cart Information</h3>
+                <div class="info-item">
+                    <label>Cart ID:</label>
+                    <span id="cartIdValue"></span>
+                </div>
+            </div>
+
+            <section class="action-sections">
+                <div>
+                    <h2>Cart Actions</h2>
+                    <ul id="cart-action-list"></ul>
+                </div>
+
+                <div>
+                    <h2>Checkout Actions</h2>
+                    <ul id="checkout-action-list"></ul>
+                </div>
+            </section>
+        </div>
+        <script src="popup.js"></script>
+    </body>
+</html>
