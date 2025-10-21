@@ -158,6 +158,8 @@ Edit `.github/workflows/release.yml` to:
 - Add lint / tests before packaging
 - Upload to additional storage (e.g. S3) by adding a step.
 
+Note: The workflow parses `manifest.json` using built-in Node (`node -p "require('./manifest.json').version"`) so no extra dependency installation (like `jq`) is required.
+
 ### Future Enhancement Ideas
 - Add checksum generation (SHA256) and publish alongside artifact.
 - Add a matrix for multiple browsers (Chrome/Firefox) if a WebExtension migration occurs.

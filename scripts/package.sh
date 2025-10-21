@@ -3,7 +3,7 @@ set -euo pipefail
 
 # package.sh - Create a production ZIP archive for the Chrome extension.
 # Usage: ./scripts/package.sh [--version <override>] [--out-dir <dir>]
-# Output: <name>-v<version>.zip placed into the out directory (default: dist/)
+# Output: <name>-<version>.zip placed into the out directory (default: dist/)
 
 RED="\033[0;31m"; GREEN="\033[0;32m"; YELLOW="\033[1;33m"; NC="\033[0m"
 
@@ -25,11 +25,11 @@ done
 
 mkdir -p "$OUT_DIR"
 
-MANIFEST_VERSION=$(jq -r '.version' "$ROOT_DIR/manifest.json") || { echo "jq is required"; exit 1; }
+MANIFEST_VERSION=$(node -p "require('$ROOT_DIR/manifest.json').version")
 VERSION=${VERSION_OVERRIDE:-$MANIFEST_VERSION}
 
-NAME=$(jq -r '.name' "$ROOT_DIR/manifest.json" | tr ' ' '-' | tr '[:upper:]' '[:lower:]')
-ARCHIVE_NAME="${NAME}-v${VERSION}.zip"
+NAME=$(node -p "require('$ROOT_DIR/manifest.json').name" | tr ' ' '-' | tr '[:upper:]' '[:lower:]')
+ARCHIVE_NAME="${NAME}-${VERSION}.zip"
 ARCHIVE_PATH="$OUT_DIR/$ARCHIVE_NAME"
 
 echo -e "${YELLOW}Building production archive: $ARCHIVE_NAME${NC}";
@@ -55,4 +55,4 @@ zip -r "$ARCHIVE_PATH" . >/dev/null
 popd >/dev/null
 
 echo -e "${GREEN}Created $ARCHIVE_PATH${NC}";
-echo "To publish: Upload ZIP to Chrome Web Store (Developer Dashboard) or attach to a GitHub Release."
+echo "Attach ZIP to internal GitHub Release for distribution."

@@ -16,14 +16,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
       - name: Verify manifest version matches tag (if tag)
         if: startsWith(github.ref, 'refs/tags/')
         run: |
           TAG_VERSION="${GITHUB_REF#refs/tags/}"
-          MANIFEST_VERSION=$(jq -r '.version' manifest.json)
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
           echo "Tag version: $TAG_VERSION"
           echo "Manifest version: $MANIFEST_VERSION"
           if [ "$TAG_VERSION" != "$MANIFEST_VERSION" ]; then
@@ -36,6 +33,17 @@ jobs:
           chmod +x scripts/package.sh
           ./scripts/package.sh
           ls -al dist
+      - name: Verify expected zip exists
+        run: |
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
+          NAME=$(node -p "require('./manifest.json').name" | tr ' ' '-' | tr '[:upper:]' '[:lower:]')
+          EXPECT="dist/${NAME}-${MANIFEST_VERSION}.zip"
+          echo "Expecting archive: $EXPECT"
+          if [ ! -f "$EXPECT" ]; then
+            echo "Archive missing: $EXPECT" >&2
+            ls -al dist || true
+            exit 1
+          fi
 
       - name: Upload artifact
         if: github.event_name != 'pull_request'
@@ -55,19 +63,27 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Install jq
-        run: sudo apt-get update && sudo apt-get install -y jq
-
       - name: Build zip
         run: |
           chmod +x scripts/package.sh
           ./scripts/package.sh
+      - name: Verify expected zip exists
+        run: |
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
+          NAME=$(node -p "require('./manifest.json').name" | tr ' ' '-' | tr '[:upper:]' '[:lower:]')
+          EXPECT="dist/${NAME}-${MANIFEST_VERSION}.zip"
+          echo "Expecting archive: $EXPECT"
+          if [ ! -f "$EXPECT" ]; then
+            echo "Archive missing: $EXPECT" >&2
+            ls -al dist || true
+            exit 1
+          fi
 
       - name: Determine archive name
         id: name
         run: |
-          MANIFEST_VERSION=$(jq -r '.version' manifest.json)
-          NAME=$(jq -r '.name' manifest.json | tr ' ' '-' | tr '[:upper:]' '[:lower:]')
+          MANIFEST_VERSION=$(node -p "require('./manifest.json').version")
+          NAME=$(node -p "require('./manifest.json').name" | tr ' ' '-' | tr '[:upper:]' '[:lower:]')
           echo "archive=${NAME}-${MANIFEST_VERSION}.zip" >> $GITHUB_OUTPUT
 
       - name: Create GitHub Release
