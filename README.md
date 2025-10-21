@@ -20,10 +20,33 @@ A Chrome extension that retrieves and displays the `cartId` cookie from `*.tsc-s
 
 ## Installation
 
-1. Open Chrome and navigate to `chrome://extensions/`
-2. Enable "Developer mode" in the top right corner
-3. Click "Load unpacked" and select this project folder
-4. The extension icon should appear in your browser toolbar
+Internal distribution only (not published to the Chrome Web Store).
+
+### Install (Drag & Drop ZIP)
+
+1. Access the internal repository's Releases page.
+2. Download the latest signed/approved ZIP (e.g. `saatva-helper-extension-v1.0.0.zip`).
+3. Open Chrome and go to: `chrome://extensions/`
+4. Enable "Developer mode" (top right toggle).
+5. Drag the ZIP file onto the page. (Fallback: extract then "Load unpacked".)
+6. Pin the extension via the puzzle icon if it doesn't appear.
+
+### Updating
+Download the new ZIP for the updated version and drag it in again. Remove the previous version if still present.
+
+### Verifying Installation
+1. Navigate to a valid `*.tsc-starts-coding.com` page.
+2. Click the extension icon.
+3. The popup should show status or the `cartId`.
+
+### Removal
+Go to `chrome://extensions/` and click "Remove" on the extension card.
+
+### Permissions Rationale
+`activeTab`: Needed to inspect the current tab URL for domain validation.
+`cookies`: Required to read the `cartId` cookie value.
+
+If you fork or adapt this extension, reduce permissions to only what you need.
 
 ## Development
 
@@ -68,38 +91,17 @@ Add icon files to the `icons/` directory:
 
 MIT License
 
-## Production Distribution
+## Internal Distribution
 
-You can distribute this extension in two common ways:
+This extension is not published externally. Distribute via internal GitHub Releases or secure file share. Prefer Releases for version traceability.
 
-### 1. GitHub Release (Direct Download)
-
-Users can download a ZIP archive and load it unpacked.
-
-Steps:
-1. Run the packaging script:
-	```bash
-	./scripts/package.sh
-	```
-2. The ZIP is created under `dist/` (e.g. `saatva-helper-extension-v1.0.0.zip`).
-3. Create a new GitHub Release and attach the ZIP file.
-4. Users download the ZIP, extract it, then follow the Installation steps (Load unpacked).
-
-### 2. Chrome Web Store
-
-To publish to the Chrome Web Store:
-1. Sign in to the Chrome Web Store Developer Dashboard.
-2. Click "Add New Item" and upload the generated ZIP from `dist/`.
-3. Provide screenshots, a detailed description, and categorized metadata.
-4. Submit for review. Future updates will require incrementing the `version` in `manifest.json`.
-
-### Versioning Workflow
+### Versioning Workflow (Internal)
 
 1. Update `manifest.json` version (e.g. `1.0.1`).
-2. Commit changes: `git commit -am "chore: bump version to 1.0.1"`.
-3. Tag the release: `git tag v1.0.1 && git push --tags`.
-4. Run `./scripts/package.sh --version 1.0.1` (optional override if not yet committed).
-5. Attach the ZIP to the GitHub Release or upload to the Chrome Web Store.
+2. Commit: `git commit -am "chore: bump version to 1.0.1"`.
+3. Tag: `git tag v1.0.1 && git push --tags`.
+4. Package: `./scripts/package.sh`.
+5. Attach ZIP to Release with internal notes (changelog, risk level).
 
 ### Packaging Script Details
 
