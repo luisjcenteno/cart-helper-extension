@@ -99,7 +99,7 @@ This extension is not published externally. Distribute via internal GitHub Relea
 
 1. Update `manifest.json` version (e.g. `1.0.1`).
 2. Commit: `git commit -am "chore: bump version to 1.0.1"`.
-3. Tag: `git tag v1.0.1 && git push --tags`.
+3. Tag: `git tag 1.0.1 && git push --tags`.
 4. Package: `./scripts/package.sh`.
 5. Attach ZIP to Release with internal notes (changelog, risk level).
 
@@ -137,14 +137,14 @@ GitHub Actions workflow (`.github/workflows/release.yml`) automates packaging:
 - Manual Run: Via "Run workflow" button (will build artifact if not a PR).
 
 ### Tag & Version Sync
-Tag must be `v<version>` matching the `version` in `manifest.json`. Mismatch causes workflow failure.
+Tag must be `<version>` (e.g. `1.0.1`) matching the `version` in `manifest.json`. Mismatch causes workflow failure.
 
 ### Release Steps
 1. Bump version in `manifest.json`.
 2. Commit & tag:
 	```bash
 	git commit -am "chore: bump version to 1.1.0"
-	git tag v1.1.0
+	git tag 1.1.0
 	git push origin main --tags
 	```
 3. Workflow builds ZIP and attaches to Release automatically.
