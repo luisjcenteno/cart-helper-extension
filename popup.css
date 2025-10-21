@@ -85,7 +85,7 @@ select {
     font-size: var(--font-size-base);
     font-weight: var(--font-weight-medium);
     cursor: pointer;
-    min-width: 120px;
+    min-width: 90px;
     text-align: center;
     transition: background-color var(--transition-default), transform var(--transition-default);
 }
