@@ -24,4 +24,15 @@ Update: repeat steps with newer ZIP and remove older version if still present.
 
 ## Deployment (CI)
 
-Automated GitHub Actions workflow (`.github/workflows/release.yml`). Tag a commit with the semantic version (e.g. `1.2.3`) matching `manifest.json` `version`. The workflow validates the match, builds a deterministic ZIP via `scripts/package.sh`, and attaches it to the GitHub Release. Manual runs (workflow dispatch) will build artifacts without publishing a release. Pull requests to `main` run validation only.
+Automated via GitHub Actions (`.github/workflows/release.yml`):
+
+- Pull Request to `main`:
+    - Runs validation only (version check if tagged, build, packaging script)
+    - No release created.
+- Tag push (e.g. `1.2.3`):
+    - Tag must equal `manifest.json` `version`.
+    - Workflow verifies version match.
+    - Runs `scripts/package.sh` to build deterministic ZIP in `dist/`.
+    - Publishes a GitHub Release attaching the ZIP.
+- Manual dispatch (workflow_dispatch):
+    - Builds and uploads artifact (no release) — useful for a dry run.
