@@ -1,10 +1,11 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
     <head>
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0" />
         <title>Saatva Helper</title>
         <link rel="stylesheet" href="popup.css" />
+        <script src="popup.js" defer></script>
     </head>
 
     <body>
@@ -22,7 +23,7 @@
 
             <div class="card flex flex--align-center">
                 <pre id="cartId"></pre>
-                <button class="button button--icon" id="copyCartId">
+                <button class="button button--icon" id="copyCartId" title="Copy Cart ID to Clipboard">
                     <img
                         src="assets/copy.svg"
                         alt="copy icon"
@@ -37,7 +38,7 @@
 
             <div class="flex flex--gap-sm">
                 <a
-                    class="button button--primary button--full-width"
+                    class="button button--primary button--disabled button--full-width"
                     id="openQA"
                     target="_blank"
                     rel="noopener"
@@ -45,7 +46,7 @@
                     Cart QA
                 </a>
                 <a
-                    class="button button--primary button--full-width"
+                    class="button button--primary button--disabled button--full-width"
                     id="openStage"
                     target="_blank"
                     rel="noopener"
@@ -56,7 +57,7 @@
 
             <div class="flex flex--gap-sm mt--sm">
                 <a
-                    class="button button--primary button--full-width"
+                    class="button button--primary button--disabled button--full-width"
                     id="openCartLocal"
                     target="_blank"
                     rel="noopener"
@@ -64,7 +65,7 @@
                     Cart local
                 </a>
                 <a
-                    class="button button--primary button--full-width"
+                    class="button button--primary button--disabled button--full-width"
                     id="openCheckoutLocal"
                     target="_blank"
                     rel="noopener"
@@ -73,17 +74,21 @@
                 </a>
             </div>
 
+            <div class="text--bold mt--md">Open dev-branch</div>
             <div class="flex flex--gap-sm mt--sm">
                 <div class="flex w--full">
                     <input type="text" placeholder="CONV-1234" id="devBranchInput" value="CONV-" />
                 </div>
-                <div class="flex align--center">
+                <div class="flex w--full align--center">
                     <select id="devBranchPage">
                         <option value="cart">Cart</option>
                         <option value="checkout">Checkout</option>
                     </select>
                 </div>
-                <button class="button button--primary button--full-width" id="devBranchSubmit">
+                <button
+                    class="button button--primary button--disabled button--full-width"
+                    id="devBranchSubmit"
+                >
                     Dev-branch
                 </button>
             </div>
@@ -93,6 +98,5 @@
             <h1>Unsupported Domain</h1>
             <p>This extension only works on Saatva's website.</p>
         </section>
-        <script src="popup.js"></script>
     </body>
 </html>
