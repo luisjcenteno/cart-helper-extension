@@ -14,6 +14,37 @@ const devBranchPageSelect = document.getElementById('devBranchPage')
 const devBranchInput = document.getElementById('devBranchInput')
 const devBranchSubmit = document.getElementById('devBranchSubmit')
 
+// Centralized configuration constants
+const CONFIG = Object.freeze({
+    SUPPORTED_SUFFIX: 'tsc-starts-coding.com',
+    DOMAINS: Object.freeze({
+        qa: 'https://www.saatva-node-qa.tsc-starts-coding.com',
+        stage: 'https://www.saatva-node-stage.tsc-starts-coding.com',
+        cartLocal: 'https://cart.local',
+        checkoutLocal: 'https://checkout.local'
+    }),
+    ICONS: Object.freeze({
+        copy: 'assets/copy.svg',
+        check: 'assets/check.svg'
+    }),
+    MESSAGES: Object.freeze({
+        noCart: 'No cart yet. Add an item on the site to generate a cart, then click Refresh.'
+    })
+})
+
+// --- Promise-based wrappers for chrome.* APIs ---
+function getActiveTab() {
+    return new Promise((resolve) => {
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => resolve(tabs[0]))
+    })
+}
+
+function getCookie(url, name) {
+    return new Promise((resolve) => {
+        chrome.cookies.get({ url, name }, (cookie) => resolve(cookie?.value))
+    })
+}
+
 // Initial state
 let cartIdCookie
 hide(cartSection)
@@ -24,46 +55,60 @@ refreshButton.addEventListener('click', () => {
     fetchCartId()
 })
 
-function fetchCartId() {
+async function fetchCartId() {
     setLoading(true)
-    // Get active tab and validate domain
-    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
-        const currentTab = tabs[0]
+    try {
+        const currentTab = await getActiveTab()
         if (!currentTab?.url) {
-            showUnsupported('No active tab URL available.')
-            return
+            return showUnsupported('No active tab URL available.')
         }
-        const url = new URL(currentTab.url)
-        const hostname = url.hostname
-        const supported = hostname.endsWith('tsc-starts-coding.com')
+        const activeUrl = new URL(currentTab.url)
+        const hostname = activeUrl.hostname
+        const supported = hostname.endsWith(CONFIG.SUPPORTED_SUFFIX)
         if (!supported) {
-            showUnsupported(`Unsupported: ${hostname}`)
-            return
+            return showUnsupported(`Unsupported: ${hostname}`)
         }
-
-        chrome.cookies.getAll({ domain: hostname }, (cookies) => {
-            cartIdCookie = cookies.find((c) => c.name === 'cartId')?.value
-            if (cartIdCookie) {
-                cartIdPre.textContent = cartIdCookie
-                cartIdPre.dataset.cartid = cartIdCookie
-                showCart()
-                setLinks()
-                toggleDisabledState()
-            } else {
-                cartIdPre.textContent = '(no cart yet)'
-                showCart() // still show section but with placeholder
-                toggleDisabledState()
+        cartIdCookie = await getCookie(currentTab.url, 'cartId')
+        if (cartIdCookie) {
+            cartIdPre.textContent = cartIdCookie
+            cartIdPre.dataset.cartid = cartIdCookie
+            const help = document.getElementById('noCartHelp')
+            if (help) help.style.display = 'none'
+        } else {
+            cartIdPre.textContent = '(no cart yet)'
+            cartIdPre.dataset.cartid = ''
+            const help = document.getElementById('noCartHelp')
+            if (help) {
+                help.textContent = CONFIG.MESSAGES.noCart
+                help.style.display = 'block'
             }
-            setLoading(false)
-        })
-    })
+        }
+        showCart()
+        setLinks()
+        toggleDisabledState()
+    } catch (err) {
+        console.error('[popup] fetchCartId error', err)
+        showUnsupported('Error retrieving cart ID.')
+    } finally {
+        setLoading(false)
+    }
 }
 
 function setLinks() {
-    openQAButton.href = `https://www.saatva-node-qa.tsc-starts-coding.com/cart/?cartId=${cartIdCookie}`
-    openStageButton.href = `https://www.saatva-node-stage.tsc-starts-coding.com/cart/?cartId=${cartIdCookie}`
-    openCartLocalButton.href = `https://cart.local/cart/?cartId=${cartIdCookie}`
-    openCheckoutLocalButton.href = `https://checkout.local/checkout/?cartId=${cartIdCookie}`
+    const cartId = cartIdCookie
+    const buttons = [
+        { el: openQAButton, base: CONFIG.DOMAINS.qa, path: '/cart/' },
+        { el: openStageButton, base: CONFIG.DOMAINS.stage, path: '/cart/' },
+        { el: openCartLocalButton, base: CONFIG.DOMAINS.cartLocal, path: '/cart/' },
+        { el: openCheckoutLocalButton, base: CONFIG.DOMAINS.checkoutLocal, path: '/checkout/' }
+    ]
+    buttons.forEach(({ el, base, path }) => {
+        if (cartId) {
+            el.href = `${base}${path}?cartId=${encodeURIComponent(cartId)}`
+        } else {
+            el.removeAttribute('href')
+        }
+    })
 }
 
 function toggleDisabledState() {
@@ -102,9 +147,9 @@ function copyCartIdToClipboard() {
     const cartId = cartIdPre.dataset.cartid
     if (cartId && cartId !== '(no cart yet)') {
         navigator.clipboard.writeText(cartId).then(() => {
-            copyIcon.src = 'assets/check.svg'
+            copyIcon.src = CONFIG.ICONS.check
             setTimeout(() => {
-                copyIcon.src = 'assets/copy.svg'
+                copyIcon.src = CONFIG.ICONS.copy
             }, 2000)
         })
     }
@@ -126,7 +171,7 @@ copyCartIdButton.addEventListener('click', () => {
 // Bind dev branch submit
 devBranchSubmit.addEventListener('click', () => {
     const branch = devBranchInput.value
-    const selectedPage = devBranchPage.value
+    const selectedPage = devBranchPageSelect.value
     if (branch) {
         // Open dev branch URL with cartId
         const url = `https://${selectedPage}-${branch}.saatva.private/${selectedPage}/?cartId=${cartIdCookie}`
