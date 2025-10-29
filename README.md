@@ -1,6 +1,6 @@
-# Saatva Helper Extension
+# Saatva Cart Helper Extension
 
-Simple internal Chrome extension that surfaces the `cartId` cookie on `*.tsc-starts-coding.com` domains and provides quick links (QA, Stage, local, dev-branch) that preserve the current cart.
+Simple Chrome extension that surfaces the `cartId` cookie on `*.tsc-starts-coding.com` domains and provides quick links (QA, Stage, local, dev-branch) that preserve the current cart.
 
 <img width="602" height="578" alt="image" src="https://github.com/user-attachments/assets/7ca27622-3b28-4375-a2ac-cc91acaf58ec" />
 
